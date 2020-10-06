@@ -44,29 +44,40 @@ import { Request, Response } from 'express';
       console.log(req);
       let path: string;
       let image_url: string = decodeURIComponent(req.query.image_url);
-      console.log(image_url);
-      const prom = filterImageFromURL(image_url);
-      prom.then((img_path) => {
-        console.log("resolved wird gecalled");
-        console.log(img_path);
+      if (image_url === "") {
+        console.log("Please pass a URL!")
         res
-          .status(200)
-          .sendFile(img_path);
-
-        res.on('finish', function(){
-            deleteLocalFiles(img_path)
-              .then(() => {
-                  console.log("Loeschen war erfolgreich")})
-              .catch((err) => {
-                  console.log(err);
-                  console.log("Löschen war nicht erfolgreich")});
+          .status(400)
+          .send("request malformed")
+      } else 
+      {
+        console.log(image_url);
+        const prom = filterImageFromURL(image_url);
+        prom.then((img_path) => {
+          console.log("resolved wird gecalled");
+          console.log(img_path);
+          res
+            .status(200)
+            .sendFile(img_path);
+  
+          res.on('finish', function(){
+              deleteLocalFiles(img_path)
+                .then(() => {
+                    console.log("Loeschen war erfolgreich")})
+                .catch((err) => {
+                    //console.log(err);
+                    console.log("Löschen war nicht erfolgreich")});
+          });
         });
-      });
-      prom.catch((err) => {
-        console.log(err);
-        console.log("Catch wird gecalled");
-      });
-
+        prom.catch((err) => {
+          //console.log(err);
+          console.log("Catch wird gecalled");
+          res
+            .status(400)
+            .send("image can't be processed")
+        });
+  
+      }
 
   } );
   
